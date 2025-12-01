@@ -7,7 +7,7 @@ def printHead():
 
 
 def getData():
-    DataInDict = LoadDataFromJson("data/processed", "go_N_MFCC_20.json")
+    DataInDict = LoadDataFromJson("data/processed", "go_simple.json")
 
     getMapping = DataInDict["mapping"]
     getLabels = DataInDict["labels"]
