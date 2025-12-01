@@ -3,18 +3,19 @@ import librosa
 import math
 import json
 
-SAMPLE_RATE = 22050
-TRACK_DURATION = 30 
-SAMPLES_POR_TRACK = SAMPLE_RATE * TRACK_DURATION
+# --- Variáveis de Configuração (camelCase) ---
+sampleRate = 22050
+trackDuration = 30 
+samplesPerTrack = sampleRate * trackDuration
 
-DATASET_PATH = "data/raw/genres_original"
-JSON_DIR = "data/processed" 
+datasetPath = "data/raw/genres_original"
+jsonDir = "data/processed" 
 
-LIST_OF_N_MFCC = [13, 20, 30, 40, 50]
-LIST_OF_MFCC_NAMES = ["data_mfcc_13.json", "data_mfcc_20.json", "data_mfcc_30.json", "data_mfcc_40.json", "data_mfcc_50.json"]
+listOfNMfcc = [5, 13, 20, 30, 40, 50]
+listOfMfccNames = ["data_mfcc_5.json", "data_mfcc_13.json", "data_mfcc_20.json", "data_mfcc_30.json", "data_mfcc_40.json", "data_mfcc_50.json"]
 
 def SaveMfcc(datasetPath, jsonPath, nMfcc, nFft=2048, hopLength=512, numSegments=10):
-
+    
     data = {
         "mapping": [],
         "labels": [],
@@ -22,7 +23,7 @@ def SaveMfcc(datasetPath, jsonPath, nMfcc, nFft=2048, hopLength=512, numSegments
         "files": []
     }
 
-    samplesPerSegment = int(SAMPLES_POR_TRACK / numSegments)
+    samplesPerSegment = int(samplesPerTrack / numSegments)
     numMfccVectorsPerSegment = math.ceil(samplesPerSegment / hopLength)
 
     print(f"| Salvando MFCCs (n_mfcc={nMfcc}) em: {jsonPath}")
@@ -37,7 +38,7 @@ def SaveMfcc(datasetPath, jsonPath, nMfcc, nFft=2048, hopLength=512, numSegments
             for f in fileNames:
                 filePath = os.path.join(dirPath, f)
                 try:
-                    signal, sr = librosa.load(filePath, sr=SAMPLE_RATE)
+                    signal, sr = librosa.load(filePath, sr=sampleRate)
 
                     for d in range(numSegments):
                         start = samplesPerSegment * d
@@ -62,13 +63,13 @@ def SaveMfcc(datasetPath, jsonPath, nMfcc, nFft=2048, hopLength=512, numSegments
     print(f"| Sucesso! Arquivo gerado: {jsonPath}\n")
 
 
-def GenerateMfccDatasets(datasetPath, outputDir, listOfnMfcc, listOfMfccNames):
+def GenerateMfccDatasets(datasetPath, outputDir, listOfNMfcc, listOfMfccNames):
 
-    if len(listOfnMfcc) != len(listOfMfccNames):
+    if len(listOfNMfcc) != len(listOfMfccNames):
         print("| ERRO: Quantidade de itens incompatível entre as listas!")
         return
 
-    for i, nMfcc in enumerate(listOfnMfcc):
+    for i, nMfcc in enumerate(listOfNMfcc):
         fileName = listOfMfccNames[i]
         
         fullJsonPath = os.path.join(outputDir, fileName)
@@ -77,4 +78,4 @@ def GenerateMfccDatasets(datasetPath, outputDir, listOfnMfcc, listOfMfccNames):
 
 
 if __name__ == "__main__":
-    GenerateMfccDatasets(DATASET_PATH, JSON_DIR, LIST_OF_N_MFCC, LIST_OF_MFCC_NAMES)
+    GenerateMfccDatasets(datasetPath, jsonDir, listOfNMfcc, listOfMfccNames)
