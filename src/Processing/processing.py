@@ -1,96 +1,80 @@
 import os
 import librosa
 import math
-import numpy as np
-from src.Shared import utils
+import json
 
-N_FFT = 2048
-HOP_LENGTH = 512
 SAMPLE_RATE = 22050
-N_MFCC = 20
+TRACK_DURATION = 30 
+SAMPLES_POR_TRACK = SAMPLE_RATE * TRACK_DURATION
 
-DURATION = 30 
-SAMPLES_PER_TRACK = SAMPLE_RATE * DURATION
-EXPECTED_NUM_MFCC_VECTORS = math.ceil(SAMPLES_PER_TRACK / HOP_LENGTH) 
+DATASET_PATH = "data/raw/genres_original"
+JSON_DIR = "data/processed" 
 
-def ConvertWavToMfcc(fullAudioFilePath : str):
-    try:
-        signal, sr = librosa.load(fullAudioFilePath, sr=SAMPLE_RATE)
-        
-        if len(signal) < SAMPLES_PER_TRACK:
-            pad_width = SAMPLES_PER_TRACK - len(signal)
-            signal = np.pad(signal, (0, pad_width), mode='constant')
-        else:
-            signal = signal[:SAMPLES_PER_TRACK]
-        
-        MFCCs = librosa.feature.mfcc(y=signal, sr=SAMPLE_RATE, n_fft=N_FFT, hop_length=HOP_LENGTH, n_mfcc=N_MFCC)
-        
-        if MFCCs.shape[1] > EXPECTED_NUM_MFCC_VECTORS:
-            MFCCs = MFCCs[:, :EXPECTED_NUM_MFCC_VECTORS]
-        elif MFCCs.shape[1] < EXPECTED_NUM_MFCC_VECTORS:
-             pad_width = EXPECTED_NUM_MFCC_VECTORS - MFCCs.shape[1]
-             MFCCs = np.pad(MFCCs, ((0, 0), (0, pad_width)), mode='constant')
+LIST_OF_N_MFCC = [13, 20, 30, 40, 50]
+LIST_OF_MFCC_NAMES = ["data_mfcc_13.json", "data_mfcc_20.json", "data_mfcc_30.json", "data_mfcc_40.json", "data_mfcc_50.json"]
 
-        mean = np.mean(MFCCs, axis=1, keepdims=True)
-        std = np.std(MFCCs, axis=1, keepdims=True)
-        normalized_mfcc = (MFCCs - mean) / (std + 1e-6)
+def SaveMfcc(datasetPath, jsonPath, nMfcc, nFft=2048, hopLength=512, numSegments=10):
 
-        return normalized_mfcc
-        
-    except Exception as e:
-        print(f"| ERRO ao processar {fullAudioFilePath}: {e}")
-        return None
-
-
-def LoadData(rootDirPath):
-    listOfData = []
-    listOfLabel = []
-
-    for root, dirs, files in os.walk(rootDirPath):
-        
-        current_label = os.path.basename(root)
-        
-        if root == rootDirPath:
-            continue
-
-        for index, fileName in enumerate(files):
-            
-            if fileName.endswith(".wav"):
-                print(f"| [ {index} ] - Processando {fileName}...")
-                fullAudioFilePath = os.path.join(root, fileName)
-                
-                audioConverted = ConvertWavToMfcc(fullAudioFilePath)
-                
-                if audioConverted is not None:
-
-                    listOfData.append(audioConverted.tolist())
-                    listOfLabel.append(current_label)
-
-    return listOfData, listOfLabel
-
-
-def ProcessingData(listOfData, listOfLabel):
-    if len(listOfData) != len(listOfLabel):
-        return {}
-    
-    unique_labels = sorted(list(set(listOfLabel)))
-    label_to_index = {label: index for index, label in enumerate(unique_labels)}
-    integer_labels = [label_to_index[label] for label in listOfLabel]
-
-    dataset_dictionary = {
-        "mapping": unique_labels,
-        "labels": integer_labels,
-        "MFCC": listOfData
+    data = {
+        "mapping": [],
+        "labels": [],
+        "mfcc": [],
+        "files": []
     }
 
-    return dataset_dictionary
+    samplesPerSegment = int(SAMPLES_POR_TRACK / numSegments)
+    numMfccVectorsPerSegment = math.ceil(samplesPerSegment / hopLength)
+
+    print(f"| Salvando MFCCs (n_mfcc={nMfcc}) em: {jsonPath}")
+
+    for i, (dirPath, dirNames, fileNames) in enumerate(os.walk(datasetPath)):
+        
+        if dirPath is not datasetPath:
+            semanticLabel = os.path.basename(dirPath)
+            data["mapping"].append(semanticLabel)
+            print(f"|   Processando Gênero: {semanticLabel}")
+
+            for f in fileNames:
+                filePath = os.path.join(dirPath, f)
+                try:
+                    signal, sr = librosa.load(filePath, sr=SAMPLE_RATE)
+
+                    for d in range(numSegments):
+                        start = samplesPerSegment * d
+                        finish = start + samplesPerSegment
+
+                        mfcc = librosa.feature.mfcc(y=signal[start:finish], sr=sr, n_mfcc=nMfcc, n_fft=nFft, hop_length=hopLength)
+                        mfcc = mfcc.T
+
+                        if len(mfcc) == numMfccVectorsPerSegment:
+                            data["mfcc"].append(mfcc.tolist())
+                            data["labels"].append(i-1)
+                            data["files"].append(f)
+                            
+                except Exception as e:
+                    print(f"| ERRO ao ler {filePath}: {e}")
+
+    os.makedirs(os.path.dirname(jsonPath), exist_ok=True)
+    
+    with open(jsonPath, "w", encoding='utf-8') as fp:
+        json.dump(data, fp, indent=4)
+        
+    print(f"| Sucesso! Arquivo gerado: {jsonPath}\n")
+
+
+def GenerateMfccDatasets(datasetPath, outputDir, listOfnMfcc, listOfMfccNames):
+
+    if len(listOfnMfcc) != len(listOfMfccNames):
+        print("| ERRO: Quantidade de itens incompatível entre as listas!")
+        return
+
+    for i, nMfcc in enumerate(listOfnMfcc):
+        fileName = listOfMfccNames[i]
+        
+        fullJsonPath = os.path.join(outputDir, fileName)
+        
+        SaveMfcc(datasetPath, fullJsonPath, nMfcc)
+
 
 if __name__ == "__main__":
-    raw_path = "data/raw/genres_simple"
-    
-    if os.path.exists(raw_path):
-        print("| Iniciando processamento com tamanho FIXO...")
-        data, labels = LoadData(raw_path)
-        processedData = ProcessingData(data, labels)
-        utils.SaveDataInJson(processedData, "data/processed", "go_Simple.json")
-        print("| Concluído!")
+    GenerateMfccDatasets(DATASET_PATH, JSON_DIR, LIST_OF_N_MFCC, LIST_OF_MFCC_NAMES)

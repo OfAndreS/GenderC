@@ -6,7 +6,7 @@
 #SBATCH --job-name=EmotionsPatterns         # Nome do job para fácil identificação
 #SBATCH --partition=amd-512                 # Partição correta
 #SBATCH --ntasks=1                          # Número de tarefas
-#SBATCH --cpus-per-task=4                   # Aumentado para 4 CPUs
+#SBATCH --cpus-per-task=12                   # Aumentado para 4 CPUs
 #SBATCH --mem=16G                           # Aumentado para 16GB de RAM (aumento significativo)
 #SBATCH --time=0-01:00:00                   # Aumentado para 1 hora
 
@@ -36,7 +36,9 @@ conda activate DeepLearningAdvanced
 
 # Execute o script Python
 echo "Iniciando execucao do app.py..."
-python -m src.Training.training
+# python -m src.Training.training
+python -m src.Processing.processing
+# python -m src.Core.core
 echo "Execucao do .py finalizada."
 
 echo "==============================================================="
