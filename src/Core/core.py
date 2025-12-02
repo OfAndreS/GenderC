@@ -13,8 +13,8 @@ from src.Processing import processing
 
 listOfNMfcc = [5, 13, 20, 30, 40, 50]
 numRuns = 10
-resultFile = "resultados_experimento.csv"
-seedsFile = "seeds_config.json"
+resultFile = "output/resultados_experimento.csv"
+seedsFile = "configs/seeds_config.json"
 
 rawDataPath = "data/raw/genres_original"
 processedDir = "data/processed"
