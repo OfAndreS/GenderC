@@ -1,0 +1,13 @@
+2025-12-01 11:51:24.618112: I tensorflow/core/platform/cpu_feature_guard.cc:182] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: SSE4.1 SSE4.2 AVX AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+/home/asgmoreira/.conda/envs/DeepLearningAdvanced/lib/python3.11/site-packages/librosa/util/files.py:10: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_filename
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/asgmoreira/SyncDesk/GenderC/src/Core/core.py", line 149, in <module>
+    RunExperiment()
+  File "/home/asgmoreira/SyncDesk/GenderC/src/Core/core.py", line 89, in RunExperiment
+    keras.backend.clear_session()
+    ^^^^^
+NameError: name 'keras' is not defined

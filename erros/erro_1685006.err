@@ -1,0 +1,29 @@
+2025-12-01 11:56:18.658851: I tensorflow/core/platform/cpu_feature_guard.cc:182] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: SSE4.1 SSE4.2 AVX AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+/home/asgmoreira/.conda/envs/DeepLearningAdvanced/lib/python3.11/site-packages/librosa/util/files.py:10: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_filename
+2025-12-01 11:56:28.924124: I tensorflow/core/common_runtime/process_util.cc:146] Creating new thread pool with default inter op setting: 12. Tune using inter_op_parallelism_threads for best performance.
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/asgmoreira/SyncDesk/GenderC/src/Core/core.py", line 149, in <module>
+    RunExperiment()
+  File "/home/asgmoreira/SyncDesk/GenderC/src/Core/core.py", line 119, in RunExperiment
+    model = training.BuildModelOptimized(inputShape)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/asgmoreira/SyncDesk/GenderC/src/Training/training.py", line 44, in BuildModelOptimized
+    model.add(keras.layers.Conv2D(64, (3, 3), activation='relu', kernel_regularizer=reg)) 
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/asgmoreira/.conda/envs/DeepLearningAdvanced/lib/python3.11/site-packages/tensorflow/python/trackable/base.py", line 205, in _method_wrapper
+    result = method(self, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/asgmoreira/.conda/envs/DeepLearningAdvanced/lib/python3.11/site-packages/keras/utils/traceback_utils.py", line 70, in error_handler
+    raise e.with_traceback(filtered_tb) from None
+  File "/home/asgmoreira/.conda/envs/DeepLearningAdvanced/lib/python3.11/site-packages/tensorflow/python/framework/ops.py", line 1973, in _create_c_op
+    raise ValueError(e.message)
+ValueError: Exception encountered when calling layer "conv2d_1" (type Conv2D).
+
+Negative dimension size caused by subtracting 3 from 2 for '{{node conv2d_1/Conv2D}} = Conv2D[T=DT_FLOAT, data_format="NHWC", dilations=[1, 1, 1, 1], explicit_paddings=[], padding="VALID", strides=[1, 1, 1, 1], use_cudnn_on_gpu=true](Placeholder, conv2d_1/Conv2D/ReadVariableOp)' with input shapes: [?,64,2,32], [3,3,32,64].
+
+Call arguments received by layer "conv2d_1" (type Conv2D):
+  • inputs=tf.Tensor(shape=(None, 64, 2, 32), dtype=float32)
