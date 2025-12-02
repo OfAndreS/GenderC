@@ -86,7 +86,7 @@ def RunExperiment():
         for i, seed in enumerate(seedsList):
             print(f"\n| ---> Execução {i+1}/{numRuns} (Seed: {seed})")
             
-            keras.backend.clear_session()
+            tf.keras.backend.clear_session()
             gc.collect()
             
             tf.random.set_seed(seed)

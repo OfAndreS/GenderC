@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow.keras as keras
 from sklearn.model_selection import GroupShuffleSplit
+
 from src.Shared import utils
 
 def PrepareDatasets(testSize, validationSize):
@@ -32,21 +33,24 @@ def PrepareDatasets(testSize, validationSize):
 
 
 def BuildModelOptimized(inputShape):
-
+ 
     model = keras.Sequential()
     
     reg = keras.regularizers.l2(0.001)
 
-    model.add(keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=inputShape, kernel_regularizer=reg))
+    # 1ª Camada
+    model.add(keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=inputShape, kernel_regularizer=reg, padding='same'))
     model.add(keras.layers.MaxPooling2D((2, 2), padding='same')) 
     model.add(keras.layers.BatchNormalization())
 
-    model.add(keras.layers.Conv2D(64, (3, 3), activation='relu', kernel_regularizer=reg)) 
+    # 2ª Camada
+    model.add(keras.layers.Conv2D(64, (3, 3), activation='relu', kernel_regularizer=reg, padding='same')) 
     model.add(keras.layers.MaxPooling2D((2, 2), padding='same'))
     model.add(keras.layers.BatchNormalization())
     model.add(keras.layers.Dropout(0.2)) 
 
-    model.add(keras.layers.Conv2D(128, (2, 2), activation='relu', kernel_regularizer=reg)) 
+    # 3ª Camada
+    model.add(keras.layers.Conv2D(128, (2, 2), activation='relu', kernel_regularizer=reg, padding='same')) 
     model.add(keras.layers.MaxPooling2D((2, 2), padding='same'))
     model.add(keras.layers.BatchNormalization())
     model.add(keras.layers.Dropout(0.3))
@@ -90,28 +94,19 @@ def Predict(model, x, y):
 
 if __name__ == "__main__":
     
-    # 1. Preparar Datasets
-    # Test size = 0.25, Validation size = 0.2 (como no vídeo)
     xTrain, xValidation, xTest, yTrain, yValidation, yTest = PrepareDatasets(0.25, 0.2)
 
-    # 2. Construir a CNN
-    # Pega o shape dinamicamente (ex: 130, 13, 1)
     inputShape = (xTrain.shape[1], xTrain.shape[2], 1)
     model = BuildModelOptimized(inputShape)
 
-    # 3. & 4. Compilar e Treinar
     history = TrainModel(model, xTrain, yTrain, xValidation, yValidation)
     
-    # 5. Avaliar no Test Set
     testLoss, testAcc = model.evaluate(xTest, yTest, verbose=2)
     print(f'\nTest accuracy: {testAcc}')
 
-    # 6. Salvar Modelo
     utils.SaveDataInJson(history, "output", "h.json")
     model.save("models/music_genre_cnn_valerio.h5")
     
-    # 7. Exemplo de Predição (Inference)
-    # Pega uma amostra aleatória do teste (ex: índice 100) para testar
     xToPredict = xTest[100]
     yToPredict = yTest[100]
     Predict(model, xToPredict, yToPredict)

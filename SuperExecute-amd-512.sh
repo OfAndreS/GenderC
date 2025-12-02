@@ -3,12 +3,12 @@
 # DIRETIVAS DO SLURM
 #=======================================================================
 
-#SBATCH --job-name=EmotionsPatterns         # Nome do job para fácil identificação
-#SBATCH --partition=amd-512                 # Partição correta
-#SBATCH --ntasks=1                          # Número de tarefas
-#SBATCH --cpus-per-task=12                   # Aumentado para 4 CPUs
-#SBATCH --mem=16G                           # Aumentado para 16GB de RAM (aumento significativo)
-#SBATCH --time=0-01:00:00                   # Aumentado para 1 hora
+#SBATCH --job-name=GenderC_ExpFull        # Nome atualizado para facilitar
+#SBATCH --partition=amd-512               # Partição correta
+#SBATCH --ntasks=1                        # Número de tarefas
+#SBATCH --cpus-per-task=12                # 12 CPUs (Seu Sweet Spot)
+#SBATCH --mem=32G                         # 32GB RAM (Margem de segurança)
+#SBATCH --time=1-00:00:00                 # TEMPO: 1 dia (Garante que não será cortado)
 
 # --- Salvando Output ---
 #SBATCH --output=resultados/resultado_%j.out
@@ -19,10 +19,8 @@
 #=======================================================================
 
 echo "==============================================================="
-echo "Job iniciado com mais recursos em: $(date)"
-echo "Executando no no: $(hostname)"
-echo "Arquivos de saida serao salvos em 'resultados/'"
-echo "Arquivos de erro serao salvos em 'erros/'"
+echo "Job iniciado em: $(date)"
+echo "Nó: $(hostname)"
 echo "==============================================================="
 
 # Navegue para o diretório do seu projeto
@@ -35,10 +33,11 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate DeepLearningAdvanced
 
 # Execute o script Python
-echo "Iniciando execucao do app.py..."
-# python -m src.Training.training
-python -m src.Processing.processing
-# python -m src.Core.core
+echo "Iniciando Experimento Científico Completo (Core)..."
+
+# O Core orquestra tudo: gera dados (se faltar), treina e salva logs
+python -m src.Core.core
+
 echo "Execucao do .py finalizada."
 
 echo "==============================================================="

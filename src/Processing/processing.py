@@ -1,7 +1,7 @@
 import os
-import librosa
 import math
 import json
+import librosa
 
 # --- Variáveis de Configuração (camelCase) ---
 sampleRate = 22050

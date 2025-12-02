@@ -3,8 +3,12 @@
 # ==================================
 # Nunca envie dados para o Git. Use .gitkeep se quiser
 # manter as pastas 'raw' e 'processed' vazias.
-data/
+data/processed/*
+data/raw/*
 
+models
+
+notebooks
 # ==================================
 # MODELOS (IMPORTANTE)
 # ==================================
@@ -30,6 +34,14 @@ venv/
 env/
 *.env
 .env
+
+# ==================================
+# Arquivos .sh para configuração
+# ==================================
+.SetupProjeto.sh
+.SuperExecute-amd-512.sh
+.SuperExecute-gpu-8-v100.sh
+
 
 # ==================================
 # NOTEBOOKS JUPYTER
