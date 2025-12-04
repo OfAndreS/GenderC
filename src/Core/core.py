@@ -61,6 +61,10 @@ def LoadSpecificJson(jsonPath):
         return None, None, None
 
 def RunExperiment():
+    # Cria diretórios
+    os.makedirs(os.path.dirname(resultFile), exist_ok=True)
+    os.makedirs(os.path.dirname(seedsFile), exist_ok=True)
+
     seedsList = GenerateFixedSeeds(numRuns, seedsFile)
     
     allResults = []
@@ -126,21 +130,27 @@ def RunExperiment():
             loss, acc = model.evaluate(xTest, yTest, verbose=0)
             print(f"| Resultado Run {i+1}: Acurácia de Teste = {acc:.4f} | Tempo: {trainDuration:.2f}s")
 
+            # --- CORREÇÃO AQUI: CONVERSÃO EXPLÍCITA ---
             allResults.append({
                 "n_mfcc": nMfcc,
                 "run_id": i + 1,
-                "seed": seed,
-                "test_accuracy": acc,
-                "test_loss": loss,
-                "epochs_trained": len(history.history['loss']),
-                "train_duration": trainDuration,
-                "history_loss": history.history['loss'],
-                "history_accuracy": history.history['accuracy'],
-                "history_val_loss": history.history['val_loss'],
-                "history_val_accuracy": history.history['val_accuracy']
+                "seed": int(seed), # Python int
+                "test_accuracy": float(acc), # Python float
+                "test_loss": float(loss),    # Python float
+                "epochs_trained": int(len(history.history['loss'])),
+                "train_duration": float(trainDuration),
+                # List comprehension garante floats puros
+                "history_loss": [float(v) for v in history.history['loss']],
+                "history_accuracy": [float(v) for v in history.history['accuracy']],
+                "history_val_loss": [float(v) for v in history.history['val_loss']],
+                "history_val_accuracy": [float(v) for v in history.history['val_accuracy']]
             })
 
-            pd.DataFrame(allResults).to_csv(resultFile, index=False)
+            # Salva o CSV
+            try:
+                pd.DataFrame(allResults).to_csv(resultFile, index=False)
+            except Exception as e:
+                print(f"| ERRO AO SALVAR CSV: {e}")
 
     print("\n|  EXPERIMENTO FINALIZADO ")
     print(f"| Resultados salvos em: {resultFile}")
