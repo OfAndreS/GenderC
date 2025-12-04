@@ -1,229 +1,178 @@
-import os
-import ast
-import numpy as np
 import pandas as pd
-import seaborn as sns
+import matplotlib
+matplotlib.use('Agg') 
 import matplotlib.pyplot as plt
+import matplotlib.patheffects as path_effects
+import seaborn as sns
+import ast
+import os
+import numpy as np
 
-resultFile = "resultados_experimento.csv"
-outputDir = "graphics_pastel"
+# -----------------------------------------------------------------------------
+# 1. CONFIGURAÇÃO DE ESTILO
+# -----------------------------------------------------------------------------
+sns.set_theme(style="ticks")
+plt.rcParams['font.family'] = 'serif'
+plt.rcParams['axes.grid'] = True
+plt.rcParams['grid.alpha'] = 0.3
+plt.rcParams['grid.linestyle'] = '--'
 
-sns.set_theme(style="whitegrid", context="paper", font_scale=1.5)
-plt.rcParams['figure.figsize'] = (14, 8)
-plt.rcParams['lines.linewidth'] = 3
-plt.rcParams['axes.titlepad'] = 20 
-plt.rcParams['axes.labelpad'] = 15
-plt.rcParams['savefig.dpi'] = 300
-plt.rcParams['savefig.facecolor'] = 'white'
-
-PASTEL_PALETTE = "Set2"
-
-def LoadExperimentData(csvPath):
-    if not os.path.exists(csvPath):
-        print(f"| ERRO: Ficheiro não encontrado: {csvPath}")
+# -----------------------------------------------------------------------------
+# 2. FUNÇÕES AUXILIARES
+# -----------------------------------------------------------------------------
+def parse_history(history_str):
+    try:
+        if pd.isna(history_str): return None
+        history_list = ast.literal_eval(history_str)
+        if isinstance(history_list, list) and len(history_list) > 0:
+            return float(history_list[-1])
+        return None
+    except:
         return None
 
-    df = pd.read_csv(csvPath)
-
-    listCols = ['history_loss', 'history_accuracy', 'history_val_loss', 'history_val_accuracy']
-    for col in listCols:
-        df[col] = df[col].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
-
-    return df
-
-def PlotDistribution(df, xCol, yCol, title, ylabel, outputDir, filename, baseline=None, invertBest=False):
-    fig, ax = plt.subplots(figsize=(14, 8))
-    
-    uniqueX = sorted(df[xCol].unique())
-    
-    sns.violinplot(
-        data=df, 
-        x=xCol, 
-        y=yCol, 
-        order=uniqueX,
-        palette=PASTEL_PALETTE, 
-        hue=xCol,
-        legend=False,
-        inner=None,
-        alpha=0.6,
-        linewidth=0,
-        ax=ax
-    )
-    
-    sns.boxplot(
-        data=df, 
-        x=xCol, 
-        y=yCol, 
-        order=uniqueX,
-        width=0.15, 
-        boxprops={'zorder': 2, 'facecolor':'none', 'linewidth': 1.5},
-        whiskerprops={'color':'#333333', 'linewidth': 1.5},
-        capprops={'color':'#333333', 'linewidth': 1.5},
-        medianprops={'color':'#333333', 'linewidth': 2.5, 'solid_capstyle': 'butt'},
-        showfliers=False,
-        ax=ax
-    )
-    
-    sns.swarmplot(
-        data=df, 
-        x=xCol, 
-        y=yCol, 
-        order=uniqueX,
-        color="white", 
-        edgecolor="#333333", 
-        linewidth=0.6,
-        size=6.5,
-        alpha=0.9,
-        ax=ax
-    )
-    
-    if baseline is not None:
-        color = '#e74c3c' if not invertBest else '#2ecc71'
-        label = f'Baseline (N=13): {baseline:.4f}'
-        ax.axhline(y=baseline, color=color, linestyle='--', alpha=0.8, linewidth=2, label=label, zorder=0)
-        ax.legend(loc='best', frameon=True, facecolor='white', framealpha=0.95, fancybox=True)
-
-    ax.set_title(title, fontweight='bold')
-    ax.set_xlabel('Resolução Espectral (N_MFCC)', fontweight='medium')
-    ax.set_ylabel(ylabel, fontweight='medium')
-    ax.grid(True, axis='y', linestyle=':', color='gray', alpha=0.4)
-    sns.despine(left=True)
-    
-    outputPath = os.path.join(outputDir, filename)
-    plt.savefig(outputPath, bbox_inches='tight')
-    plt.close()
-    print(f"| Gráfico Pastel Salvo: {outputPath}")
-
-def PlotMetricEvolutionComparison(df, metricKey, title, ylabel, outputDir, filename):
-    plt.figure(figsize=(14, 8))
-    
-    uniqueMfccs = sorted(df['n_mfcc'].unique())
-    colors = sns.color_palette(PASTEL_PALETTE, n_colors=len(uniqueMfccs))
-
-    for i, nMfcc in enumerate(uniqueMfccs):
-        subset = df[df['n_mfcc'] == nMfcc]
-        metricValues = subset[metricKey].tolist()
-        
-        minLen = min(len(x) for x in metricValues)
-        metricValues = [x[:minLen] for x in metricValues]
-        
-        metricValues = np.array(metricValues)
-        
-        meanVals = np.mean(metricValues, axis=0)
-        stdVals = np.std(metricValues, axis=0)
-        epochs = range(1, len(meanVals) + 1)
-
-        plt.plot(epochs, meanVals, label=f'N={nMfcc}', color=colors[i], linewidth=3, alpha=0.9)
-        plt.fill_between(epochs, meanVals - stdVals, meanVals + stdVals, color=colors[i], alpha=0.12)
-
-    plt.title(title, fontweight='bold')
-    plt.xlabel('Épocas', fontweight='medium')
-    plt.ylabel(ylabel, fontweight='medium')
-    plt.legend(title="N_MFCC", loc='best', frameon=True, facecolor='white', fancybox=True)
-    plt.grid(True, linestyle=':', color='gray', alpha=0.4)
-    sns.despine()
-    
-    outputPath = os.path.join(outputDir, filename)
-    plt.savefig(outputPath, bbox_inches='tight')
-    plt.close()
-    print(f"| Gráfico Pastel Salvo: {outputPath}")
-
-def PlotGeneralizationGap(df, outputDir, filename):
-    plt.figure(figsize=(12, 7))
-    
-    df['finalTrainAcc'] = df['history_accuracy'].apply(lambda x: x[-1])
-    df['generalizationGap'] = df['finalTrainAcc'] - df['test_accuracy']
-    
-    ax = sns.barplot(
-        data=df, 
-        x="n_mfcc", 
-        y="generalizationGap", 
-        hue="n_mfcc", 
-        palette=PASTEL_PALETTE, 
-        legend=False,
-        capsize=0.15,
-        err_kws={'linewidth': 2, 'color': '#555555'},
-        alpha=0.85,
-        edgecolor=".2"
-    )
-    
-    plt.title("Análise de Overfitting (Generalization Gap)", fontweight='bold')
-    plt.ylabel("Diferença (Treino - Teste)", fontweight='medium')
-    plt.xlabel("N_MFCC", fontweight='medium')
-    plt.grid(True, axis='y', linestyle=':', color='gray', alpha=0.4)
-    sns.despine(left=True)
-    
-    plt.axhline(0, color='gray', linewidth=1)
-
-    outputPath = os.path.join(outputDir, filename)
-    plt.savefig(outputPath, bbox_inches='tight')
-    plt.close()
-    print(f"| Gráfico Pastel Salvo: {outputPath}")
-
-def GenerateThesisGraphics(inputCsv, outputDir):
-
-    if not os.path.exists(outputDir):
-        os.makedirs(outputDir)
-
-    print(f"| Carregando dados de: {inputCsv}")
-    df = LoadExperimentData(inputCsv)
-
-    if df is None:
+def plot_tradeoff_global_mean_legend(file_path):
+    # Verificação
+    if not os.path.exists(file_path):
+        print(f"ERRO: Arquivo {file_path} não encontrado.")
         return
 
-    print("| Gerando gráficos estéticos para tese...")
+    df = pd.read_csv(file_path)
 
-    baselineAcc = df[df['n_mfcc'] == 13]['test_accuracy'].mean()
-    PlotDistribution(
-        df,
-        xCol='n_mfcc',
-        yCol='test_accuracy',
-        title='Acurácia Final de Teste (Maior é Melhor)',
-        ylabel='Acurácia',
-        outputDir=outputDir,
-        filename='1_Thesis_Accuracy_Dist_Pastel.png',
-        baseline=baselineAcc
+    # 3. PROCESSAMENTO
+    df['final_train_acc'] = df['history_accuracy'].apply(parse_history)
+    col_validacao = 'test_accuracy'
+    df = df.dropna(subset=['final_train_acc', col_validacao])
+    
+    df['Overfitting_Gap'] = df['final_train_acc'] - df[col_validacao]
+
+    # Cálculo da Média Global
+    global_mean_gap = df['Overfitting_Gap'].mean()
+    global_mean_acc = df[col_validacao].mean()
+
+    # Ordenação Numérica das Labels
+    col_hue = 'n_mfcc'
+    if col_hue in df.columns:
+        unique_values_int = sorted(df[col_hue].dropna().unique().astype(int))
+        unique_categories = [str(x) for x in unique_values_int]
+        df[col_hue] = df[col_hue].astype(str)
+    else:
+        unique_categories = ['Default']
+        df['Default'] = 'Default'
+        col_hue = 'Default'
+
+    # 4. CONFIGURAÇÃO VISUAL
+    palette_pastel = sns.color_palette("pastel", n_colors=len(unique_categories))
+    map_pastel = dict(zip(unique_categories, palette_pastel))
+    
+    available_markers = ['o', 's', 'D', '^', 'v', 'X', 'P', '*'] 
+    if len(unique_categories) > len(available_markers):
+        available_markers = available_markers * (len(unique_categories) // len(available_markers) + 1)
+    marker_map = dict(zip(unique_categories, available_markers[:len(unique_categories)]))
+
+    summary_df = df.groupby(col_hue)[['Overfitting_Gap', col_validacao]].agg(['mean', 'std'])
+
+    # 5. PLOTAGEM
+    plt.figure(figsize=(12, 8))
+
+    # A. CRUZ DA MÉDIA GLOBAL (Agora Transparente e com Label para Legenda)
+    # Linha Vertical (Adicionamos label aqui para aparecer na legenda)
+    plt.axvline(x=global_mean_gap, color='#555555', linestyle='--', 
+                linewidth=1.5, alpha=0.4, zorder=1, label='Média Global')
+    
+    # Linha Horizontal (Sem label para não duplicar na legenda)
+    plt.axhline(y=global_mean_acc, color='#555555', linestyle='--', 
+                linewidth=1.5, alpha=0.4, zorder=1)
+    
+    # (Removido plt.text da média global conforme pedido)
+
+    # B. Seta de Contexto
+    plt.annotate('Direção Ideal\n(Alta Acurácia, Baixo Gap)', 
+                 xy=(0.05, 0.95), xycoords='axes fraction',
+                 xytext=(0.25, 0.85), textcoords='axes fraction',
+                 arrowprops=dict(facecolor='black', arrowstyle='->', lw=1.5, alpha=0.3),
+                 fontsize=10, color='gray', alpha=0.6, ha='center')
+
+    # C. Runs Individuais (Fundo)
+    # Importante: Definimos legend='auto' para o Seaborn gerar os handles das categorias
+    sns.scatterplot(
+        data=df,
+        x='Overfitting_Gap',
+        y=col_validacao,
+        hue=col_hue,
+        style=col_hue,
+        hue_order=unique_categories,
+        style_order=unique_categories,
+        palette=map_pastel,
+        markers=marker_map,
+        s=90,
+        edgecolor='white',
+        linewidth=0.5,
+        alpha=0.5,
+        zorder=3
     )
 
-    baselineLoss = df[df['n_mfcc'] == 13]['test_loss'].mean()
-    PlotDistribution(
-        df,
-        xCol='n_mfcc',
-        yCol='test_loss',
-        title='Perda Final de Teste (Menor é Melhor)',
-        ylabel='Loss (Entropia Cruzada)',
-        outputDir=outputDir,
-        filename='2_Thesis_Loss_Dist_Pastel.png',
-        baseline=baselineLoss,
-        invertBest=True
-    )
+    # D. Loop de Médias (Desenha os pontos centrais)
+    for category in unique_categories:
+        if category not in summary_df.index: continue
 
-    PlotDistribution(
-        df,
-        xCol='n_mfcc',
-        yCol='epochs_trained',
-        title='Esforço de Convergência',
-        ylabel='Épocas Treinadas',
-        outputDir=outputDir,
-        filename='3_Thesis_Convergence_Epochs_Pastel.png'
-    )
+        mean_x = summary_df.loc[category, ('Overfitting_Gap', 'mean')]
+        std_x  = summary_df.loc[category, ('Overfitting_Gap', 'std')]
+        mean_y = summary_df.loc[category, (col_validacao, 'mean')]
+        std_y  = summary_df.loc[category, (col_validacao, 'std')]
+        
+        c_color = map_pastel[category] 
+        c_marker = marker_map[category]
+        
+        # Barras de Erro
+        plt.errorbar(
+            x=mean_x, y=mean_y, xerr=std_x, yerr=std_y,
+            fmt='none', ecolor='#444444', elinewidth=1.2, capsize=4, alpha=0.6, zorder=9
+        )
 
-    PlotGeneralizationGap(
-        df,
-        outputDir=outputDir,
-        filename='4_Thesis_Overfitting_Gap_Pastel.png'
-    )
+        # Marcador Central
+        plt.scatter(
+            x=mean_x, y=mean_y, s=280, marker=c_marker,
+            color=c_color, edgecolors='black', linewidth=2, zorder=10
+        )
+        
+        # Label no Gráfico
+        label_y = mean_y - std_y - 0.003 
+        plt.text(
+            x=mean_x, y=label_y, 
+            s=f"MFCC-{category}", fontsize=9, fontweight='bold',
+            color='#333333', ha='center', va='top', zorder=11,
+            path_effects=[path_effects.withStroke(linewidth=3, foreground='white')]
+        )
 
-    PlotMetricEvolutionComparison(
-        df, 
-        metricKey='history_val_accuracy', 
-        title='Dinâmica de Aprendizado Comparativa', 
-        ylabel='Acurácia de Validação', 
-        outputDir=outputDir, 
-        filename='5_Thesis_Learning_Dynamics_Pastel.png'
-    )
+    # 6. FINALIZAÇÃO E LEGENDA
+    plt.title('Trade-Off: Acurácia vs. Gap', fontsize=16, pad=20, weight='bold')
+    plt.xlabel(r'Gap de Overfitting (Treino - Teste) $\leftarrow$ Melhor', fontsize=12)
+    plt.ylabel(r'Acurácia de Validação $\uparrow$ Melhor', fontsize=12) 
+    
+    sns.despine(offset=10, trim=False)
+    
+    # AJUSTE DA LEGENDA
+    # O Seaborn gera handles para o Hue. O axvline tem seu próprio handle.
+    # Vamos pedir ao Matplotlib para juntar tudo.
+    handles, labels = plt.gca().get_legend_handles_labels()
+    
+    # Para garantir que a ordem fique bonita (Categorias primeiro, Média Global por último ou vice-versa)
+    # O axvline geralmente é adicionado primeiro se foi plotado primeiro.
+    # Mas o Seaborn pode ter adicionado seus handles depois.
+    
+    # Vamos reordenar para colocar a "Média Global" no final da lista, se preferir
+    # (Opcional: se quiser ordem específica, basta filtrar as listas handles/labels)
+    
+    plt.legend(handles=handles, labels=labels, title='Flexibilização', 
+               bbox_to_anchor=(1.02, 1), loc='upper left', frameon=False)
+    
+    plt.tight_layout()
 
-    print("| Processo estético concluído.")
+    output_path = 'graphics/gComplex/TradeOff_Publication_Legend.png'
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    print(f"Gráfico final salvo em: {output_path}")
 
-if __name__ == "__main__":
-    GenerateThesisGraphics(resultFile, outputDir)
+# Execução
+file_path = 'output/resultados_experimento.csv'
+plot_tradeoff_global_mean_legend(file_path)
