@@ -11,8 +11,8 @@ samplesPerTrack = sampleRate * trackDuration
 datasetPath = "data/raw/genres_original"
 jsonDir = "data/processed" 
 
-listOfNMfcc = [5, 13, 20, 30, 40, 50]
-listOfMfccNames = ["data_mfcc_5.json", "data_mfcc_13.json", "data_mfcc_20.json", "data_mfcc_30.json", "data_mfcc_40.json", "data_mfcc_50.json"]
+listOfNMfcc = [5, 7, 13, 20, 30, 40, 50]
+listOfMfccNames = ["data_mfcc_5.json", "data_mfcc_7.json", "data_mfcc_13.json", "data_mfcc_20.json", "data_mfcc_30.json", "data_mfcc_40.json", "data_mfcc_50.json"]
 
 def SaveMfcc(datasetPath, jsonPath, nMfcc, nFft=2048, hopLength=512, numSegments=10):
     

@@ -11,9 +11,9 @@ from src.Shared import utils
 from src.Training import training
 from src.Processing import processing
 
-listOfNMfcc = [5, 13, 20, 30, 40, 50]
-numRuns = 10
-resultFile = "output/resultados_experimento.csv"
+listOfNMfcc = [5, 7, 13, 20, 30, 40, 50]
+numRuns = 30
+resultFile = "output/resultados_experimento_30_runs.csv"
 seedsFile = "configs/seeds_config.json"
 
 rawDataPath = "data/raw/genres_original"
@@ -21,7 +21,7 @@ processedDir = "data/processed"
 
 def GenerateFixedSeeds(n, filePath):
     if os.path.exists(filePath):
-        print(f"| --- CARREGANDO SEEDS EXISTENTES DE: {filePath} ---")
+        print(f"|  CARREGANDO SEEDS EXISTENTES DE: {filePath} ")
         try:
             with open(filePath, 'r') as f:
                 seeds = json.load(f)
@@ -35,7 +35,7 @@ def GenerateFixedSeeds(n, filePath):
         except Exception as e:
             print(f"| ERRO ao ler arquivo de seeds ({e}). Gerando novas...")
 
-    print(f"| --- GERANDO NOVAS SEEDS E SALVANDO EM: {filePath} ---")
+    print(f"|  GERANDO NOVAS SEEDS E SALVANDO EM: {filePath} ")
     rng = np.random.default_rng(42)
     seeds = rng.integers(low=1, high=10000, size=n).tolist()
     
@@ -84,7 +84,7 @@ def RunExperiment():
             continue
 
         for i, seed in enumerate(seedsList):
-            print(f"\n| ---> Execução {i+1}/{numRuns} (Seed: {seed})")
+            print(f"\n| > Execução {i+1}/{numRuns} (Seed: {seed})")
             
             tf.keras.backend.clear_session()
             gc.collect()
@@ -142,7 +142,7 @@ def RunExperiment():
 
             pd.DataFrame(allResults).to_csv(resultFile, index=False)
 
-    print("\n| --- EXPERIMENTO FINALIZADO ---")
+    print("\n|  EXPERIMENTO FINALIZADO ")
     print(f"| Resultados salvos em: {resultFile}")
 
 if __name__ == "__main__":

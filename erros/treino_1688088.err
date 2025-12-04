@@ -1,0 +1,49 @@
+Lmod has detected the following error: The following module(s) are unknown:
+"gcc"
+
+Please check the spelling or version number. Also try "module spider ..."
+It is also possible your cache file is out-of-date; it may help to try:
+  $ module --ignore_cache load "gcc"
+
+Also make sure that all modulefiles written in TCL start with the string
+#%Module
+
+
+
+2025-12-04 11:31:12.467533: I tensorflow/core/platform/cpu_feature_guard.cc:182] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2025-12-04 11:31:19.475677: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Could not find TensorRT
+2025-12-04 11:31:30.186748: W tensorflow/core/common_runtime/gpu/gpu_device.cc:1956] Cannot dlopen some GPU libraries. Please make sure the missing libraries mentioned above are installed properly if you would like to use GPU. Follow the guide at https://www.tensorflow.org/install/gpu for how to download and setup the required libraries for your platform.
+Skipping registering GPU devices...
+2025-12-04 11:31:32.163700: I tensorflow/core/platform/cpu_feature_guard.cc:182] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2025-12-04 11:31:33.039333: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Could not find TensorRT
+2025-12-04 11:31:41.645174: W tensorflow/core/common_runtime/gpu/gpu_device.cc:1956] Cannot dlopen some GPU libraries. Please make sure the missing libraries mentioned above are installed properly if you would like to use GPU. Follow the guide at https://www.tensorflow.org/install/gpu for how to download and setup the required libraries for your platform.
+Skipping registering GPU devices...
+Traceback (most recent call last):
+  File "/home/asgmoreira/.conda/envs/DeepLearningFinal/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/home/asgmoreira/.conda/envs/DeepLearningFinal/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/home/asgmoreira/SyncDesk/GenderC/src/Core/core.py", line 149, in <module>
+    RunExperiment()
+  File "/home/asgmoreira/SyncDesk/GenderC/src/Core/core.py", line 143, in RunExperiment
+    pd.DataFrame(allResults).to_csv(resultFile, index=False)
+  File "/home/asgmoreira/.conda/envs/DeepLearningFinal/lib/python3.10/site-packages/pandas/core/frame.py", line 855, in __init__
+    arrays, columns, index = nested_data_to_arrays(
+  File "/home/asgmoreira/.conda/envs/DeepLearningFinal/lib/python3.10/site-packages/pandas/core/internals/construction.py", line 520, in nested_data_to_arrays
+    arrays, columns = to_arrays(data, columns, dtype=dtype)
+  File "/home/asgmoreira/.conda/envs/DeepLearningFinal/lib/python3.10/site-packages/pandas/core/internals/construction.py", line 837, in to_arrays
+    arr, columns = _list_of_dict_to_arrays(data, columns)
+  File "/home/asgmoreira/.conda/envs/DeepLearningFinal/lib/python3.10/site-packages/pandas/core/internals/construction.py", line 918, in _list_of_dict_to_arrays
+    columns = ensure_index(pre_cols)
+  File "/home/asgmoreira/.conda/envs/DeepLearningFinal/lib/python3.10/site-packages/pandas/core/indexes/base.py", line 7713, in ensure_index
+    return Index(index_like, copy=copy, tupleize_cols=False)
+  File "/home/asgmoreira/.conda/envs/DeepLearningFinal/lib/python3.10/site-packages/pandas/core/indexes/base.py", line 566, in __new__
+    arr = sanitize_array(data, None, dtype=dtype, copy=copy)
+  File "/home/asgmoreira/.conda/envs/DeepLearningFinal/lib/python3.10/site-packages/pandas/core/construction.py", line 651, in sanitize_array
+    subarr = maybe_convert_platform(data)
+  File "/home/asgmoreira/.conda/envs/DeepLearningFinal/lib/python3.10/site-packages/pandas/core/dtypes/cast.py", line 138, in maybe_convert_platform
+    arr = lib.maybe_convert_objects(arr)
+  File "pandas/_libs/lib.pyx", line 2555, in pandas._libs.lib.maybe_convert_objects
+TypeError: Cannot convert numpy.ndarray to numpy.ndarray
