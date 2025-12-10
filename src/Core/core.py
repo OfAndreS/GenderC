@@ -13,7 +13,8 @@ from src.Processing import processing
 
 listOfNMfcc = [5, 7, 13, 20, 30, 40, 50]
 numRuns = 30
-resultFile = "output/resultados_experimento_30_runs.csv"
+# MUDANÇA 1: Extensão .pkl
+resultFile = "output/resultados_experimento_30_runs.pkl"
 seedsFile = "configs/seeds_config.json"
 
 rawDataPath = "data/raw/genres_original"
@@ -25,15 +26,11 @@ def GenerateFixedSeeds(n, filePath):
         try:
             with open(filePath, 'r') as f:
                 seeds = json.load(f)
-            
             if len(seeds) != n:
                 print(f"| AVISO: O arquivo tem {len(seeds)} seeds, mas o experimento pede {n}.")
-                print("| Usaremos as seeds do arquivo até onde der ou repetiremos se faltar.")
-            
-            print(f"| Seeds carregadas: {seeds}")
             return seeds
         except Exception as e:
-            print(f"| ERRO ao ler arquivo de seeds ({e}). Gerando novas...")
+            print(f"| ERRO ao ler seeds: {e}")
 
     print(f"|  GERANDO NOVAS SEEDS E SALVANDO EM: {filePath} ")
     rng = np.random.default_rng(42)
@@ -42,11 +39,8 @@ def GenerateFixedSeeds(n, filePath):
     try:
         with open(filePath, 'w') as f:
             json.dump(seeds, f)
-        print(f"| Arquivo de seeds criado com sucesso.")
     except Exception as e:
-        print(f"| ERRO ao salvar arquivo de seeds: {e}")
-
-    print(f"| Seeds em uso: {seeds}")
+        print(f"| ERRO ao salvar seeds: {e}")
     return seeds
 
 def LoadSpecificJson(jsonPath):
@@ -61,38 +55,31 @@ def LoadSpecificJson(jsonPath):
         return None, None, None
 
 def RunExperiment():
-    # Cria diretórios
     os.makedirs(os.path.dirname(resultFile), exist_ok=True)
     os.makedirs(os.path.dirname(seedsFile), exist_ok=True)
 
     seedsList = GenerateFixedSeeds(numRuns, seedsFile)
-    
     allResults = []
 
     for nMfcc in listOfNMfcc:
-        print(f"\n\n==================================================")
-        print(f"| INICIANDO RODADA PARA N_MFCC = {nMfcc}")
-        print(f"==================================================")
-
+        print(f"\n| INICIANDO RODADA PARA N_MFCC = {nMfcc}")
+        
         jsonName = f"data_mfcc_{nMfcc}.json"
         fullJsonPath = os.path.join(processedDir, jsonName)
         
         if not os.path.exists(fullJsonPath):
-            print(f"| Dataset não encontrado. Gerando {jsonName}...")
             processing.SaveMfcc(rawDataPath, fullJsonPath, nMfcc=nMfcc, numSegments=10)
         
         x, y, groups = LoadSpecificJson(fullJsonPath)
         
         if x is None or len(x) == 0:
-            print("| ERRO CRÍTICO: Dataset vazio ou corrompido. Pulando...")
             continue
 
         for i, seed in enumerate(seedsList):
-            print(f"\n| > Execução {i+1}/{numRuns} (Seed: {seed})")
+            print(f"| > Execução {i+1}/{numRuns} (Seed: {seed})")
             
             tf.keras.backend.clear_session()
             gc.collect()
-            
             tf.random.set_seed(seed)
             np.random.seed(seed)
             
@@ -119,7 +106,6 @@ def RunExperiment():
                 continue
 
             inputShape = (xTrainFinal.shape[1], xTrainFinal.shape[2], 1)
-            
             model = training.BuildModelOptimized(inputShape)
             
             startTime = time.time()
@@ -128,31 +114,29 @@ def RunExperiment():
             trainDuration = endTime - startTime
             
             loss, acc = model.evaluate(xTest, yTest, verbose=0)
-            print(f"| Resultado Run {i+1}: Acurácia de Teste = {acc:.4f} | Tempo: {trainDuration:.2f}s")
+            print(f"| Resultado: Acc = {acc:.4f} | Tempo: {trainDuration:.2f}s")
 
-            # --- CORREÇÃO AQUI: CONVERSÃO EXPLÍCITA ---
+            # MUDANÇA 2: Com Pickle, podemos salvar objetos NumPy diretamente (embora converter seja boa prática)
             allResults.append({
                 "n_mfcc": nMfcc,
                 "run_id": i + 1,
-                "seed": int(seed), # Python int
-                "test_accuracy": float(acc), # Python float
-                "test_loss": float(loss),    # Python float
+                "seed": int(seed),
+                "test_accuracy": float(acc),
+                "test_loss": float(loss),
                 "epochs_trained": int(len(history.history['loss'])),
                 "train_duration": float(trainDuration),
-                # List comprehension garante floats puros
-                "history_loss": [float(v) for v in history.history['loss']],
-                "history_accuracy": [float(v) for v in history.history['accuracy']],
-                "history_val_loss": [float(v) for v in history.history['val_loss']],
-                "history_val_accuracy": [float(v) for v in history.history['val_accuracy']]
+                "history_loss": history.history['loss'],         # Salva direto!
+                "history_accuracy": history.history['accuracy'], # Salva direto!
+                "history_val_loss": history.history['val_loss'],
+                "history_val_accuracy": history.history['val_accuracy']
             })
 
-            # Salva o CSV
+            # MUDANÇA 3: Salvar como Pickle (.pkl)
             try:
-                pd.DataFrame(allResults).to_csv(resultFile, index=False)
+                pd.DataFrame(allResults).to_pickle(resultFile)
             except Exception as e:
-                print(f"| ERRO AO SALVAR CSV: {e}")
+                print(f"| ERRO AO SALVAR PKL: {e}")
 
-    print("\n|  EXPERIMENTO FINALIZADO ")
     print(f"| Resultados salvos em: {resultFile}")
 
 if __name__ == "__main__":
